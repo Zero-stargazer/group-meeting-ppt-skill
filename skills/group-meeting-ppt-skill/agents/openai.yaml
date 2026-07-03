@@ -1,0 +1,4 @@
+interface:
+  display_name: "Group Meeting PPT Skill"
+  short_description: "Turn a paper PDF or notes into a Chinese group-meeting PPTX draft."
+  default_prompt: "Use $group-meeting-ppt-skill to turn this paper PDF into a Chinese group-meeting PPTX draft, structured notes JSON, advisor questions, and integrity checklist."

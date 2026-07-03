@@ -1,0 +1,41 @@
+{
+  "source_pdf": "examples\\sample-paper.pdf",
+  "paper_title_zh": "A Rapid Multiplex Assay for Pathogen Detection",
+  "paper_title_en": "A Rapid Multiplex Assay for Pathogen Detection",
+  "research_direction": "数字微流控与多重核酸检测",
+  "meeting_type": "文献组会",
+  "duration_minutes": 15,
+  "one_sentence_summary": "This paper presents a multiplex rapid assay that combines target amplification, spatial encoding, and fluorescence readout for low-resource pathogen detection.",
+  "research_problem": "Single-target assays are inefficient for co-infection scenarios and require repeated testing.",
+  "method_route": [
+    "The authors designed primer sets",
+    "mapped targets to spatial codes",
+    "captured fluorescence",
+    "and used threshold rules to call positive reactions."
+  ],
+  "key_findings": [
+    "The assay distinguished multiple targets in a single workflow.",
+    "The encoded readout reduced interpretation complexity and worked on simulated samples.",
+    "Overall workflow from sample input to encoded fluorescence readout."
+  ],
+  "figures_to_discuss": [
+    {
+      "label": "Fig. 1",
+      "why_use": "PDF中自动识别到的图表说明，适合回原文核对后决定是否放入PPT。",
+      "what_to_say": "Overall workflow from sample input to encoded fluorescence readout."
+    },
+    {
+      "label": "Fig. 2",
+      "why_use": "PDF中自动识别到的图表说明，适合回原文核对后决定是否放入PPT。",
+      "what_to_say": "Primer screening and target design strategy."
+    }
+  ],
+  "limitations": [
+    "The sample size is limited and clinical generalization requires further validation."
+  ],
+  "relation_to_my_topic": "这篇论文可能与“数字微流控与多重核酸检测”相关，建议结合自己的课题从方法、数据、图表展示和后续实验设计四个角度筛选可复用内容。",
+  "extraction_warnings": [
+    "这是从PDF自动抽取的第一版结构化 notes，不等同于原文事实核定。",
+    "所有数字、图注、实验条件和结论必须回到PDF原文核对。"
+  ]
+}

@@ -9,9 +9,9 @@ This skill helps with structure, preparation, and review. It must not be used to
 - Suggest which figures may be useful and why.
 - Generate advisor-question checklists.
 - Mark uncertain claims for verification.
-- Help rewrite the user’s own understanding into clearer Chinese.
+- Help rewrite the user's own understanding into clearer Chinese.
 
-## Not Allowed
+## Not allowed
 
 - Invent experiments, results, sample sizes, statistical tests, author affiliations, journal metrics, or conclusions.
 - Claim a figure supports a point when the supplied evidence does not show that.
@@ -19,7 +19,7 @@ This skill helps with structure, preparation, and review. It must not be used to
 - Generate fake answers to advisor questions.
 - Encourage the user to submit AI output without reading or checking the paper.
 
-## Required Wording for Uncertainty
+## Required wording for uncertainty
 
 Use:
 
@@ -31,7 +31,7 @@ Use:
 Avoid:
 
 - “一定证明”
-- “显著提高” unless the paper provides statistical support
-- “首次提出” unless the paper claims priority and the user has verified it
-- “老师不会问” or “保证通过”
-
+- “显著提高”，unless the paper provides statistical support
+- “首次提出”，unless the paper claims priority and the user has verified it
+- “老师不会问”
+- “这版已经足够直接使用”

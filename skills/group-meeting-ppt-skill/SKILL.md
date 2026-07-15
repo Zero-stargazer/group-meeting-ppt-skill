@@ -1,134 +1,61 @@
 ---
 name: group-meeting-ppt-skill
-description: Use when a user provides a scientific paper PDF, abstract, DOI notes, or structured paper notes and needs a Chinese group-meeting or journal-club deliverable: PDF-to-PPTX draft, 10-slide outline, slide plan, speaker notes, advisor questions, figure-use plan, academic-integrity checklist, or structured paper notes JSON.
+description: "Turn an academic paper PDF into a Chinese, editable group-meeting PPTX that is ready to present: read the paper, select and crop its real figures, build a duration-aware evidence narrative, compose the slides, and visually verify the finished deck. Use when a user supplies a paper PDF and asks for a journal-club, literature-report, lab-meeting, or paper-to-PPT presentation; do not use for outline-only requests unless no PDF is available."
 ---
 
-# Group Meeting PPT Skill
+# PDF → 可直接汇报的组会 PPT
 
-## Core Principle
+## Non-negotiable outcome
 
-Help the user get from “paper is unreadable / PPT is blank” to a credible group-meeting draft. Do not fabricate data, conclusions, figures, impact factors, author affiliations, or advisor-ready answers.
+For a supplied PDF, deliver exactly:
 
-## Choose the Mode
-
-Use **PDF-to-PPTX Mode** when the user provides a PDF and wants a PowerPoint draft. Use **Rescue Outline Mode** when the user has pasted excerpts or needs a fast text outline. Use **Packaging Mode** when the user already has structured notes or wants reproducible Markdown files. Use **PPTX Draft Mode** when the user already has structured JSON and wants a PowerPoint file.
-
-| Mode | Use when | Output |
-|---|---|---|
-| PDF-to-PPTX | User provides a paper PDF and asks for PPT, slides, or a group-meeting draft | `*.notes.json` plus `draft_group_meeting.pptx` |
-| Rescue Outline | User has a paper, abstract, notes, or pasted excerpt and needs help fast | 10-slide outline, what to say on each slide, figures to use, advisor questions |
-| Packaging | User has structured JSON-like facts and wants files | `meeting_outline.md`, `slide_plan.md`, `advisor_questions.md`, `integrity_checklist.md` |
-| PPTX Draft | User wants a directly editable PPTX draft | `draft_group_meeting.pptx`, with 10 passable slides and figure placeholders |
-
-## PDF-to-PPTX Workflow
-
-When the user provides a PDF and wants a PPT draft:
-
-1. Run the PDF pipeline:
-
-   ```powershell
-   python skills/group-meeting-ppt-skill/scripts/create_pptx_from_pdf.py `
-     --pdf path/to/paper.pdf `
-     --out path/to/draft_group_meeting.pptx `
-     --notes-json path/to/paper.notes.json `
-     --research-direction "用户的研究方向"
-   ```
-
-2. Treat the generated `paper.notes.json` as a first-pass extraction, not verified truth.
-3. If the PDF extraction is weak, read the PDF directly, correct `paper.notes.json`, then rerun `create_meeting_pptx.py`.
-4. Tell the user which parts need original-paper verification, especially numbers, figure captions, experimental conditions, and conclusions.
-5. Never claim the deck is final, teacher-approved, or sufficient without human revision.
-
-## Rescue Outline Workflow
-
-1. Identify the meeting context: audience, duration, research direction, and whether this is first-year journal club, thesis group meeting, or project-related reading.
-2. Extract only supported facts from the paper material the user provided. Mark unknowns as “需要回原文核对”.
-3. Read `references/meeting-outline-rubric.md` before producing the slide plan.
-4. Read `references/question-bank.md` before producing advisor questions.
-5. Read `references/academic-integrity.md` before finalizing boundaries.
-6. Produce sections in this order:
-   - one-sentence paper summary;
-   - 10-slide meeting outline;
-   - figure-use plan;
-   - advisor questions;
-   - what the presenter must verify in the original paper.
-
-## Output Contract
-
-For a normal user request, return:
-
-```markdown
-# 组会PPT救急稿
-
-## 一句话总结
-
-## 10页组会PPT大纲
-
-## 每页应该讲什么
-
-## 建议重点放哪些图
-
-## 老师可能追问
-
-## 汇报前必须核对
+```text
+group_meeting_draft.pptx
+verify_checklist.md
 ```
 
-Keep the tone practical and direct. The user wants something they can revise, not a lecture about AI.
+The user supplies the paper PDF and, optionally, meeting duration / audience / research direction. Default to a 12-minute literature group meeting when duration is missing. Do the reading, figure selection, page planning, slide composition and QA internally. Do not give the user an outline, a page-by-page worksheet, a JSON file, placeholders, or production instructions as a substitute for the deck.
 
-## Packaging Script
+Read `references/lazy-delivery-contract.md`, `references/evidence-deck-spec.md`, and `references/release-gates.md` before starting.
 
-When the user provides structured paper notes, optionally run:
+## Required workflow
+
+1. Inspect the PDF: title, abstract, methods, results/discussion, all main-figure pages, captions, and relevant tables.
+   - Copy the title-page bibliographic metadata from the supplied PDF into the private paper record before writing any slide. Never reuse an author, journal, year, DOI or source footer from an earlier paper run.
+2. Establish the narrative: research question → method / comparison → main evidence chain → conclusion → evidence boundary → discussion.
+3. Decide page count from requested duration and the actual figure chain. Do not use a fixed page count. Select, consolidate, or split figures before composition.
+4. Build a private `deck-spec.json` following `references/evidence-deck-spec.md`.
+   - Use direct, audience-facing takeaway titles.
+   - Record `target_seconds` and `estimated_seconds` for every slide. The total must fit the requested duration; duration changes must change selection, consolidation or splitting of evidence slides.
+   - Ground every number and claim in the PDF.
+   - Give each figure slide a real source asset, figure label, panel scope, PDF page, evidence bullets, caveat, and source.
+   - Use a readable figure crop for multi-panel figures; split panels only when they answer distinct questions. When a panel crop is needed, write `crop_box` in the private spec and run `scripts/materialize_figure_crops.py` before composition; do not pass live crop instructions to the PPT renderer.
+   - Visually inspect every materialized crop before composition. The crop must contain the named panel plus its necessary axes / legend / labels, but **must not** retain surrounding article prose or a figure-caption paragraph merely because it was on the same PDF page. Put citation information in the PPT source footer instead.
+5. Generate source page assets with `scripts/render_pdf_figure_assets.py` (default 300 DPI). Correct its figure map when caption detection is weak; never keep an unreadable whole-page screenshot just because the helper found it.
+6. Materialize every panel-level crop into a real image, then validate the spec before composing:
 
 ```powershell
-python skills/group-meeting-ppt-skill/scripts/create_meeting_pack.py `
-  --input examples/sample-paper-input.json `
-  --outdir examples/sample-output
+python scripts/materialize_figure_crops.py --spec deck-spec.json --outdir figure-crops
+python scripts/validate_deck_spec.py --spec deck-spec.json
 ```
 
-The script is deterministic and only packages supplied facts. It does not read PDFs or call an LLM.
+7. Create the deck with `scripts/compose_evidence_deck.mjs` in an initialized `@oai/artifact-tool` presentation workspace. Keep temporary workspaces, virtual environments and dependency installs outside the final output directory. Do not use `create_meeting_pptx.py` or `create_pptx_from_pdf.py` as the normal PDF-to-finished-deck path; they are legacy deterministic helpers.
+8. Render every slide and inspect each full-size image. Compare the deck title-page citation and every source footer against the supplied PDF. Fix clipped text, partial panel labels, overlap, small figures, duplicate points, incorrect figure/panel references, stale citations, generic filler, and internal production copy.
+9. Pass every gate in `references/release-gates.md`. If a gate fails, repair internally and rerender. If the PDF cannot support a finished deck, return a clearly named evidence brief instead of a fake PPTX.
 
-## PPTX Draft Script
+## Composition requirements
 
-When the user wants a `.pptx`, run:
+- Use the original paper's figures, not invented charts or decorative AI illustrations.
+- Keep titles and bullets editable. Paper figures may remain embedded images.
+- Keep source labels on every figure slide and concise sources on non-figure slides.
+- Use evidence boundaries as scientific content, not generic disclaimers.
+- Do not present unsupported causality, sample numbers, metrics, or paper conclusions as facts.
+- Do not place any of the following on audience-facing slides: internal paths, prompts, scoring rules, planning notes, or instructions to the presenter.
 
-```powershell
-python skills/group-meeting-ppt-skill/scripts/create_meeting_pptx.py `
-  --input examples/sample-paper-input.json `
-  --out examples/sample-output/draft_group_meeting.pptx
-```
+## Acceptance standard
 
-The deck should be treated as a first draft:
+The deck is acceptable only when a graduate student can open it and start rehearsing immediately: the paper's central evidence chain is present, figures are legible, titles say what the evidence means, page count fits the meeting, and the only remaining work is factual verification plus the presenter's own delivery choices.
 
-- keep all data grounded in the input notes;
-- use figure placeholders when the actual paper figures are not provided;
-- remind the user to verify all numbers, figure captions, and conclusions against the original paper;
-- do not claim the PPT is final, teacher-approved, or submission-ready.
+## No-PDF fallback
 
-## PDF Notes Script
-
-When only the structured notes JSON is needed, run:
-
-```powershell
-python skills/group-meeting-ppt-skill/scripts/paper_pdf_to_notes.py `
-  --pdf path/to/paper.pdf `
-  --out path/to/paper.notes.json `
-  --research-direction "用户的研究方向"
-```
-
-This script extracts a rough title, abstract summary, problem, method route, findings, figure/table captions, limitations, and relation-to-topic field. It is deliberately conservative and includes warnings when content must be checked manually.
-
-## Refusal and Boundary Rules
-
-- Do not write fabricated results or invented figure interpretations.
-- Do not claim the generated outline is sufficient for submission or final presentation.
-- Do not provide “guaranteed teacher-approved” answers.
-- If the user asks for direct代写 or fake data, refuse and offer a structure, checklist, or review workflow instead.
-- If the user asks for impact factor, author school, or journal metrics, require current verification before stating them.
-
-## Common Mistakes
-
-- Starting with a generic background slide instead of the paper’s specific research problem.
-- Translating captions sentence by sentence without explaining what each figure proves.
-- Putting too many multi-panel figures on one unreadable slide.
-- Hiding limitations; good group meetings usually mention them before the advisor asks.
-- Letting AI turn a weak paper into a stronger story than the evidence supports.
+When no original PDF or legal open-access copy is available, produce an evidence brief and request the PDF for a finished deck. Never label a text-only outline as a finished group-meeting PPT.

@@ -1,164 +1,106 @@
 # group-meeting-ppt-skill
 
-<p align="center">
-  <img src="media/group_meeting_ppt_skill_one_page_bright_20260703.png" alt="group-meeting-ppt-skill 项目示意图：输入 PDF，输出组会 PPT 初稿" width="760">
-</p>
+> 输入论文 PDF 与汇报时长，自动生成一份可直接用于组会汇报、可编辑的中文 PPTX。
 
-> Turn a paper PDF into a 10-slide Chinese group-meeting PPTX draft, with an intermediate notes JSON for review and revision.
+`group-meeting-ppt-skill` 是一个面向中文组会、文献汇报和 journal club 的 Codex Skill。它会读取论文全文与主图，组织研究问题、方法、证据链、结论和讨论问题，并生成一份已填充的可编辑 PPTX。
 
-`group-meeting-ppt-skill` is a Codex Skill for Chinese academic group meetings, journal clubs, literature reports, and early-stage research presentations. It helps convert a paper PDF or structured paper notes into a first-pass presentation package.
+## 你会得到什么
 
-The generated deck is a draft, not a final academic deliverable. All extracted facts, numbers, figure captions, methods, and conclusions should be checked against the original paper before presentation.
+- 一份已填充、可编辑的 `.pptx`；页数由论文图表链与汇报时长决定。
+- 论文原始图表或可读的关键图表区域，均保留图号与来源。
+- 结论、证据边界与讨论问题均已写入 PPT。
+- 一份简短的事实核对清单。
 
-## What it generates
+整个证据提取、图表选择、页数规划、PPT 排版与视觉检查都在 Skill 内部完成：
 
-- A structured notes JSON extracted from a PDF.
-- A 10-slide editable `.pptx` draft.
-- A Markdown meeting outline.
-- A slide-by-slide speaking plan.
-- A list of likely advisor questions.
-- An academic-integrity checklist.
+```text
+论文 PDF + 汇报时长
+  → 读取全文与主图
+  → 按证据链组织汇报
+  → 已填充、可编辑的 PPTX
+  → 简短事实核对清单
+```
 
-## Who it is for
+用户得到的是可编辑 PPTX 与简短事实核对清单，而不是需要自行拼装的提纲、占位页或制作说明。
 
-- First-year graduate students preparing their first literature group meeting.
-- Master's and PhD students who need a reusable paper-reading-to-slides workflow.
-- Undergraduate students preparing literature reports, thesis presentations, or course presentations.
-- Researchers who want a transparent draft-generation workflow instead of a black-box slide generator.
+## 页数由内容决定
 
-## What it does not do
+本项目不把“10 页”当作统一答案。
 
-- It does not write papers for the user.
-- It does not fabricate experimental data, results, citations, or conclusions.
-- It does not guarantee that a teacher, advisor, or reviewer will approve the generated slides.
-- It does not replace careful reading of the original paper.
-- It does not treat AI-generated explanations as verified paper facts.
+- 从研究问题、主图、回答不同问题的图表面板与汇报时长出发组织页面。
+- 密集主图可以拆成多页；短汇报可以合并证据，不用空白页凑页数。
+- 不把多个关键图硬塞到同一张不可读的页面中。
 
-## Project structure
+## 最快体验
+
+把论文 PDF 与汇报时长交给 Codex，例如：
+
+```text
+用 group-meeting-ppt-skill 把这篇 PDF 做成 12 分钟中文文献组会 PPT。
+```
+
+正常交付为：
+
+```text
+group_meeting_draft.pptx
+verify_checklist.md
+```
+
+内部的证据规格、图表地图与渲染记录用于追溯和质量检查；汇报者不需要据此重新搭建 PPT。
+
+## 与 paper-triage-skill 的交接
+
+```text
+候选论文
+  → paper-triage-skill
+  → handoff_to_group_meeting.json / .md
+  → group-meeting-ppt-skill
+  → 可编辑的组会 PPTX
+```
+
+交接文件可以包含：入选原因、建议优先读的章节/图表、待核对主张与可能的讨论问题。
+
+## 环境自检与回归测试
+
+这部分只用于验证仓库环境和回归测试；它不是用户交付路径。
+
+```powershell
+python skills/group-meeting-ppt-skill/scripts/check_env.py
+python -m unittest discover -s tests -v
+```
+
+完整的 PDF 成品路径在 Codex 的 presentation workspace 中使用 `@oai/artifact-tool` 生成 PPTX。公开版本不把旧式 JSON→固定页数 PPT 辅助脚本当作使用入口。
+
+## 项目结构
 
 ```text
 group-meeting-ppt-skill/
   README.md
   LICENSE
-  skills/
-    group-meeting-ppt-skill/
-      SKILL.md
-      agents/openai.yaml
-      references/
-      scripts/
-        paper_pdf_to_notes.py
-        create_pptx_from_pdf.py
-        create_meeting_pack.py
-        create_meeting_pptx.py
+  skills/group-meeting-ppt-skill/
+    SKILL.md
+    agents/openai.yaml
+    references/
+    scripts/
+      check_env.py
+      render_pdf_figure_assets.py
+      materialize_figure_crops.py
+      validate_deck_spec.py
+      compose_evidence_deck.mjs
   examples/
-    sample-paper.pdf
-    sample-paper-input.json
-    sample-output/
-  media/
-    group_meeting_ppt_skill_one_page_bright_20260703.png
+    README.md
   tests/
-    test_create_meeting_pack.py
-    test_create_meeting_pptx.py
-    test_create_pptx_from_pdf.py
 ```
 
-## Quick start: PDF to PPTX
+## 使用前的事实核对
 
-From the project root:
+正式汇报前请核对数字、单位、样本量、统计单位、图注、相关性和因果边界是否与原文一致。Skill 不伪造数据、引用或结论，也不会承诺导师认可或成绩结果。
 
-```powershell
-& 'C:\Users\xieni\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' `
-  skills/group-meeting-ppt-skill/scripts/create_pptx_from_pdf.py `
-  --pdf examples/sample-paper.pdf `
-  --out examples/sample-output/from_pdf_draft_group_meeting.pptx `
-  --notes-json examples/sample-output/from_pdf_notes.json `
-  --pack-outdir examples/sample-output/from-pdf-pack `
-  --research-direction "数字微流控与多重核酸检测"
-```
+## 2026-07 更新
 
-This creates:
-
-```text
-examples/sample-output/
-  from_pdf_notes.json
-  from_pdf_draft_group_meeting.pptx
-  from-pdf-pack/
-```
-
-Recommended workflow:
-
-1. Run the PDF-to-PPTX command.
-2. Open `from_pdf_notes.json`.
-3. Check extracted claims against the original PDF.
-4. Edit the notes JSON if needed.
-5. Regenerate the PPTX from the corrected notes.
-
-## Generate PPTX from existing structured notes
-
-If you already have structured paper notes:
-
-```powershell
-& 'C:\Users\xieni\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' `
-  skills/group-meeting-ppt-skill/scripts/create_meeting_pptx.py `
-  --input examples/sample-paper-input.json `
-  --out examples/sample-output/draft_group_meeting.pptx
-```
-
-## Generate Markdown meeting pack
-
-```powershell
-python skills/group-meeting-ppt-skill/scripts/create_meeting_pack.py `
-  --input examples/sample-paper-input.json `
-  --outdir examples/sample-output
-```
-
-This creates:
-
-```text
-examples/sample-output/
-  meeting_outline.md
-  slide_plan.md
-  advisor_questions.md
-  integrity_checklist.md
-```
-
-## Install as a Codex Skill
-
-Copy this folder into your Codex skills directory:
-
-```text
-skills/group-meeting-ppt-skill
-```
-
-Then ask Codex to use `group-meeting-ppt-skill` on a paper PDF or structured paper notes.
-
-## Dependencies
-
-The full PDF-to-PPTX workflow uses:
-
-- `pdfplumber`
-- `python-pptx`
-- `reportlab` for tests only
-- `Pillow` for optional image assets
-
-The bundled Codex Python runtime used during development already includes these packages. If you use another Python environment, install the missing packages manually.
-
-## Tests
-
-```powershell
-python -m unittest discover -s tests -v
-```
-
-For full PDF and PPTX test coverage, use a Python environment with `pdfplumber`, `python-pptx`, and `reportlab` installed.
-
-## Academic integrity
-
-The generated files are draft materials. Before using them in a real meeting:
-
-- Check every number, unit, sample size, threshold, and statistical result against the paper.
-- Verify all figure captions and interpretations.
-- Mark uncertain points instead of presenting them as facts.
-- Revise the deck according to your own research context and audience.
+- 图表改为面板级实图裁切；图中不得夹带论文正文或整段图注。
+- 页脚引用统一从本次 PDF 的论文记录生成，避免旧论文信息残留。
+- 每份成品在交付前需通过规格校验、全页渲染检查和溢出检测。
 
 ## License
 
